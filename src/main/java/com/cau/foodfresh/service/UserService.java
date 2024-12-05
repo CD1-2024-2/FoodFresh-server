@@ -56,7 +56,9 @@ public class UserService {
     }
 
     public List<Food.DeletedFoodInfoResponse> getDeletedFoods(String userId) throws Exception {
-        CollectionReference deletedFoodsRef = firestore.collection("User").document(userId).collection("DeletedFoods");
+        String userDocumentId = getUserDocumentId(userId);
+
+        CollectionReference deletedFoodsRef = firestore.collection("User").document(userDocumentId).collection("DeletedFoods");
         List<QueryDocumentSnapshot> documents = deletedFoodsRef.get().get().getDocuments();
 
         List<Food.DeletedFoodInfoResponse> deletedFoodList = new ArrayList<>();
@@ -67,4 +69,19 @@ public class UserService {
 
         return deletedFoodList;
     }
+
+    private String getUserDocumentId(String userId) throws Exception {
+        List<QueryDocumentSnapshot> documents = firestore.collection("User")
+                .whereEqualTo("id", userId)
+                .get()
+                .get()
+                .getDocuments();
+
+        if (documents.isEmpty()) {
+            throw new Exception("User not found");
+        }
+
+        return documents.get(0).getId();
+    }
+
 }

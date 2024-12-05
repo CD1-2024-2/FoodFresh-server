@@ -163,12 +163,29 @@ public class FoodService {
         // 삭제 식품 정보 저장
         Food.FoodInfo foodInfo = foodSnapshot.toObject(Food.FoodInfo.class);
         if (foodInfo != null) {
+            // 유저 문서 ID 찾기
+            String userDocumentId = getUserDocumentId(userId);
+
+            // 삭제된 음식 정보를 유저 문서의 서브컬렉션에 추가
             Food.DeletedFoodInfo deletedFood = new Food.DeletedFoodInfo(foodInfo, userId, reason);
-//            fridgeRef.collection("DeletedFoods").document(foodId).set(deletedFood).get();
-            firestore.collection("User").document(userId)
+            firestore.collection("User").document(userDocumentId)
                     .collection("DeletedFoods").document(foodId).set(deletedFood).get();
         }
 
         foodRef.delete().get();
+    }
+
+    private String getUserDocumentId(String userId) throws Exception {
+        List<QueryDocumentSnapshot> documents = firestore.collection("User")
+                .whereEqualTo("id", userId)
+                .get()
+                .get()
+                .getDocuments();
+
+        if (documents.isEmpty()) {
+            throw new Exception("User not found");
+        }
+
+        return documents.get(0).getId();
     }
 }
